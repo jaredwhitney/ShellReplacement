@@ -212,8 +212,8 @@ public class ShellReplacement extends JPanel
 		taskbarFrame = new JFrame();
 		taskbarFrame.setUndecorated(true);
 		taskbarFrame.setAlwaysOnTop(true);
-		infoPanelFrame.setFocusable(false);
-		infoPanelFrame.setFocusableWindowState(false);
+		taskbarFrame.setFocusable(false);
+		taskbarFrame.setFocusableWindowState(false);
 		taskbarFrame.setLocation(0, screenHeight - TaskbarCanvas.TASKBAR_HEIGHT);
 		taskbarCanvas = new TaskbarCanvas();
 		taskbarFrame.add(taskbarCanvas);
