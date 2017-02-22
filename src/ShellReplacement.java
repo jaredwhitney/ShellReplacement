@@ -80,10 +80,7 @@ public class ShellReplacement extends JPanel
 						if (!commandLineFrame.isVisible())
 							showCommandLine();
 						else
-						{
 							commandLineFrame.setVisible(false);
-							commandLineCanvas.setText("");
-						}
 					}
 					else if (input.equals("KEYCOMBO VOL_UP"))
 					{
@@ -160,7 +157,7 @@ public class ShellReplacement extends JPanel
 	}
 	public ShellReplacement()
 	{
-		setLayout(new BorderLayout());
+	/*	setLayout(new BorderLayout());
 		
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setBackground(Color.DARK_GRAY);
@@ -170,7 +167,7 @@ public class ShellReplacement extends JPanel
 		button2.setIcon("..\\img\\folder-icon.png");
 		button2.action = "javaw FileViewer";
 		buttonPanel.add(button2);
-		
+	*/
 		altTabFrame = new JFrame();
 		altTabFrame.setUndecorated(true);
 		altTabFrame.setAlwaysOnTop(true);
@@ -179,13 +176,26 @@ public class ShellReplacement extends JPanel
 		altTabFrame.pack();
 		altTabFrame.setLocation(screenWidth/2-altTabFrame.getWidth()/2, screenHeight/2-altTabFrame.getHeight()/2);
 		
+		
 		commandLineFrame = new JFrame();
 		commandLineFrame.setUndecorated(true);
 		commandLineFrame.setAlwaysOnTop(true);
 		commandLineCanvas = new CommandLineCanvas();
 		commandLineFrame.add(commandLineCanvas);
+		
+		JPanel commandLineButtonPanel = new JPanel();
+		commandLineButtonPanel.setBackground(Color.DARK_GRAY);
+		commandLineFrame.add(BorderLayout.EAST, commandLineButtonPanel);
+		
+		TaskbarButton clbutton2 = new TaskbarButton();
+		clbutton2.setIcon("..\\img\\folder-icon.png");
+		clbutton2.action = "javaw FileViewer";
+		clbutton2.closeWindow = true;
+		commandLineButtonPanel.add(clbutton2);
+		
 		commandLineFrame.pack();
 		commandLineFrame.setLocation(screenWidth/2-commandLineFrame.getWidth()/2, screenHeight-20-commandLineFrame.getHeight());
+		
 		
 		volumeNotificationFrame = new JFrame();
 		volumeNotificationFrame.setUndecorated(true);
@@ -230,8 +240,8 @@ public class ShellReplacement extends JPanel
 	}
 	public static void showCommandLine()
 	{
-		if (!commandLineFrame.isVisible())
-			commandLineFrame.setVisible(true);
+		commandLineCanvas.setText("");
+		commandLineFrame.setVisible(true);
 	}
 	public static void showVolumeNotification(int type)
 	{
@@ -242,11 +252,11 @@ public class ShellReplacement extends JPanel
 	}
 	public static void pullToTop(String windowTitle) throws Exception
 	{
-		Runtime.getRuntime().exec("..\\exe\\pulltotop \"\"" + windowTitle + "\"\"");
+		Runtime.getRuntime().exec("..\\exe\\pulltotop \"" + windowTitle + "\"");
 	}
 	public static void closeWindow(String windowTitle) throws Exception
 	{
-		Runtime.getRuntime().exec("..\\exe\\closewin \"\"" + windowTitle + "\"\"");
+		Runtime.getRuntime().exec("..\\exe\\closewin \"" + windowTitle + "\"");
 	}
 	public void paintComponent(Graphics g)
 	{
@@ -269,6 +279,7 @@ class TaskbarButton extends JComponent
 {
 	BufferedImage icon;
 	String action;
+	boolean closeWindow = false;
 	public TaskbarButton(){}
 	public void setIcon(String str)
 	{
@@ -282,6 +293,8 @@ class TaskbarButton extends JComponent
 			{
 				try
 				{
+					if (closeWindow)
+						SwingUtilities.windowForComponent(e.getComponent()).setVisible(false);
 					Runtime.getRuntime().exec(action);
 				}
 				catch(Exception ex)
@@ -407,7 +420,7 @@ class AltTabMenuElement
 			File f = new File(exePath);
 			try
 			{
-				if ((exePath.contains("java.exe")||exePath.contains("javaw.exe"))&&name.contains(" - FileViewer"))
+				if (((exePath.contains("java.exe")||exePath.contains("javaw.exe")))&&name.contains(" - FileViewer"))
 					img = folderico;
 				else
 				{
@@ -442,10 +455,7 @@ class CommandLineCanvas extends JTextArea
 				public void keyPressed(KeyEvent e)
 				{
 					if (e.getKeyCode()==KeyEvent.VK_ESCAPE)
-					{
 						ShellReplacement.commandLineFrame.setVisible(false);
-						instance.setText("");
-					}
 					else if (e.getKeyCode()!=KeyEvent.VK_ENTER)
 					{
 						((Component)e.getSource()).getParent().dispatchEvent(e);
@@ -458,7 +468,6 @@ class CommandLineCanvas extends JTextArea
 							ShellReplacement.commandLineFrame.setVisible(false);
 							if (!instance.getText().equals(""))
 								Runtime.getRuntime().exec("cmd /c start " + instance.getText());
-							instance.setText("");
 						}
 						catch(Exception ex)
 						{
