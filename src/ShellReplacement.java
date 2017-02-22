@@ -77,7 +77,13 @@ public class ShellReplacement extends JPanel
 					else if (input.equals("KEYCOMBO WINDOWS"))
 					{
 						System.out.println("caught windows button");
-						showCommandLine();
+						if (!commandLineFrame.isVisible())
+							showCommandLine();
+						else
+						{
+							commandLineFrame.setVisible(false);
+							commandLineCanvas.setText("");
+						}
 					}
 					else if (input.equals("KEYCOMBO VOL_UP"))
 					{
@@ -108,7 +114,7 @@ public class ShellReplacement extends JPanel
 						if (payload.equals("~~~"))
 							continue;
 						String name = payload.split("\\Q~~~\\E")[0];
-						if (name.equals("")||name.equals("WINDOWLIST")||name.equals("NVIDIA GeForce Overlay")||name.equals("puush")||name.equals("Settings")||name.equals("Movies & TV")||name.equals("Calculator"))
+						if (name.equals("")||name.equals("WINDOWLIST")||name.equals("NVIDIA GeForce Overlay")||name.equals("puush")||name.equals("Settings")||name.equals("Movies & TV")||name.equals("Calculator")||name.equals("Alarms & Clock"))
 							continue;
 						String exeName;
 						try
@@ -138,7 +144,10 @@ public class ShellReplacement extends JPanel
 				Thread.sleep(100);
 				frame.repaint();
 				if (altTabFrame.isVisible())
+				{
 					altTabFrame.repaint();
+					altTabFrame.requestFocus();
+				}
 				if (commandLineFrame.isVisible())
 					commandLineFrame.repaint();
 				if (volumeNotificationFrame.isVisible())
@@ -263,8 +272,23 @@ class TaskbarButton extends JComponent
 	public TaskbarButton(){}
 	public void setIcon(String str)
 	{
-		try{icon = ImageIO.read(new File(str));}catch(Exception ex){}
-		addMouseListener(new MouseAdapter(){public void mouseClicked(MouseEvent e){try{Runtime.getRuntime().exec(action);}catch(Exception ex){ex.printStackTrace();}}});
+		try
+		{
+			icon = ImageIO.read(new File(str));
+		}
+		catch(Exception ex){}
+		addMouseListener(new MouseAdapter(){
+			public void mouseClicked(MouseEvent e)
+			{
+				try
+				{
+					Runtime.getRuntime().exec(action);
+				}
+				catch(Exception ex)
+				{
+					ex.printStackTrace();
+				}
+			}});
 	}
 	public Dimension getPreferredSize()
 	{
@@ -291,7 +315,41 @@ class AltTabMenuCanvas extends JComponent
 	public AltTabMenuCanvas()
 	{
 		instance = this;
-		addMouseListener(new MouseAdapter(){public void mouseClicked(MouseEvent e){try{System.out.println(e.getY()/textHeight);ShellReplacement.altTabFrame.setVisible(false);if(e.getX()>instance.getWidth()-5-textHeight+5&&e.getX()<instance.getWidth()-5-textHeight+5+textHeight-5)ShellReplacement.closeWindow(instance.menuElements.get(e.getY()/textHeight).name);else{ShellReplacement.pullToTop(instance.menuElements.get(e.getY()/textHeight).name);}}catch(Exception ex){ex.printStackTrace();}}});
+		addMouseListener(new MouseAdapter(){
+			public void mouseClicked(MouseEvent e)
+			{
+				try
+				{
+					System.out.println(e.getY()/textHeight);
+					ShellReplacement.altTabFrame.setVisible(false);
+					if(e.getX()>instance.getWidth()-5-textHeight+5&&e.getX()<instance.getWidth()-5-textHeight+5+textHeight-5)
+						ShellReplacement.closeWindow(instance.menuElements.get(e.getY()/textHeight).name);
+					else
+						ShellReplacement.pullToTop(instance.menuElements.get(e.getY()/textHeight).name);
+				}
+				catch(Exception ex)
+				{
+					ex.printStackTrace();
+				}
+			}});
+		ShellReplacement.altTabFrame.addKeyListener(new KeyAdapter(){
+			public void keyReleased(KeyEvent ev)
+			{
+				try
+				{
+					if (ShellReplacement.altTabFrame.isVisible()&&ev.getKeyCode()==KeyEvent.VK_ALT)
+					{
+						ShellReplacement.altTabFrame.setVisible(false);
+						while(AltTabMenuCanvas.instance.menuElements.size()<=1)
+							Thread.sleep(10);
+						ShellReplacement.pullToTop(AltTabMenuCanvas.instance.menuElements.get(1).name);
+					}
+				}
+				catch(Exception ex)
+				{
+					ex.printStackTrace();
+				}
+			}});
 	}
 	public Dimension getPreferredSize()
 	{
@@ -383,7 +441,12 @@ class CommandLineCanvas extends JTextArea
 			{
 				public void keyPressed(KeyEvent e)
 				{
-					if (e.getKeyCode()!=KeyEvent.VK_ENTER)
+					if (e.getKeyCode()==KeyEvent.VK_ESCAPE)
+					{
+						ShellReplacement.commandLineFrame.setVisible(false);
+						instance.setText("");
+					}
+					else if (e.getKeyCode()!=KeyEvent.VK_ENTER)
 					{
 						((Component)e.getSource()).getParent().dispatchEvent(e);
 					}
@@ -393,7 +456,8 @@ class CommandLineCanvas extends JTextArea
 						{
 							e.consume();
 							ShellReplacement.commandLineFrame.setVisible(false);
-							Runtime.getRuntime().exec("cmd /c start " + instance.getText());
+							if (!instance.getText().equals(""))
+								Runtime.getRuntime().exec("cmd /c start " + instance.getText());
 							instance.setText("");
 						}
 						catch(Exception ex)
@@ -422,7 +486,11 @@ class VolumeNotificationCanvas extends JComponent
 	static final int VOLUME_UP = 0;
 	static final int VOLUME_DOWN = 1;
 	int type;
-	javax.swing.Timer timer = new javax.swing.Timer(1000, new ActionListener(){public void actionPerformed(ActionEvent e){ShellReplacement.volumeNotificationFrame.setVisible(false);}});
+	javax.swing.Timer timer = new javax.swing.Timer(1000, new ActionListener(){
+		public void actionPerformed(ActionEvent e)
+		{
+			ShellReplacement.volumeNotificationFrame.setVisible(false);
+		}});
 	public Dimension getPreferredSize()
 	{
 		return new Dimension(200, 200);
@@ -487,7 +555,11 @@ class InfoPanelCanvas extends JComponent implements Runnable
 				lastName = nowPlaying.niceName;
 			}
 			ShellReplacement.infoPanelFrame.repaint();
-			try{ Thread.sleep(100); }catch(InterruptedException ex){}
+			try
+			{
+				Thread.sleep(100);
+			}
+			catch(InterruptedException ex){}
 		}
 	}
 }
@@ -534,9 +606,18 @@ class TaskbarCanvas extends JComponent implements Runnable
 				String currentSSID = wifimenu.items.get(0);
 				if (SSID.equalsIgnoreCase(currentSSID))
 					return;
-				try{Runtime.getRuntime().exec("netconnect.bat " + SSID).waitFor();Thread.sleep(750);}catch(Exception ex){}
+				try
+				{
+					Runtime.getRuntime().exec("netconnect.bat " + SSID).waitFor();
+					Thread.sleep(750);
+				}
+				catch(Exception ex){}
 				TaskbarCanvas.wifimenu.items.clear();
-				try{Runtime.getRuntime().exec("net.bat");}catch(IOException ex){}
+				try
+				{
+					Runtime.getRuntime().exec("net.bat");
+				}
+				catch(IOException ex){}
 			}
 		});
 	}
@@ -573,10 +654,18 @@ class TaskbarCanvas extends JComponent implements Runnable
 			{
 				ShellReplacement.taskbarFrame.setVisible(true);
 				TaskbarCanvas.wifimenu.items.clear();
-				try{Runtime.getRuntime().exec("net.bat");}catch(IOException ex){}
+				try
+				{
+					Runtime.getRuntime().exec("net.bat");
+				}
+				catch(IOException ex){}
 			}
 			lmy = my;
-			try{ Thread.sleep(100); }catch(InterruptedException ex){}
+			try
+			{
+				Thread.sleep(100);
+			}
+			catch(InterruptedException ex){}
 		}
 	}
 }
